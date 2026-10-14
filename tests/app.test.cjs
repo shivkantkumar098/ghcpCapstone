@@ -21,6 +21,11 @@ const collectTagNames = (element) => [
   ...element.children.flatMap(collectTagNames),
 ];
 
+const collectElements = (element) => [
+  element,
+  ...element.children.flatMap(collectElements),
+];
+
 class FakeElement {
   constructor(tagName = "div") {
     this.tagName = tagName;
@@ -51,6 +56,7 @@ class FakeElement {
 
   dispatch(name) {
     const event = {
+      target: this,
       prevented: false,
       preventDefault() {
         this.prevented = true;
@@ -111,7 +117,7 @@ const createStorage = (seed = {}, options = {}) => {
   };
 };
 
-const createApp = (storage = createStorage()) => {
+const createApp = (storage = createStorage(), options = {}) => {
   const ids = [
     "transaction-date",
     "transaction-form",
@@ -125,6 +131,7 @@ const createApp = (storage = createStorage()) => {
     "form-error",
     "save-status",
     "load-error",
+    "transaction-action-error",
     "retry-load",
     "amount-error",
     "type-error",
@@ -140,6 +147,7 @@ const createApp = (storage = createStorage()) => {
   let nextId = 1;
   const window = {
     localStorage: storage,
+    confirm: options.confirm || (() => true),
     crypto: {
       randomUUID: () => `test-${nextId++}`,
     },
@@ -170,6 +178,11 @@ const createApp = (storage = createStorage()) => {
 const transactionsFrom = (storage) =>
   JSON.parse(storage.values.get("transactions")).transactions;
 
+const deleteButtonsFrom = (element) =>
+  collectElements(element).filter(
+    (child) => child.tagName === "button" && child.textContent === "Delete",
+  );
+
 test("integration: index.html exposes every required app control and local asset", () => {
   for (const id of [
     "transaction-date",
@@ -184,6 +197,7 @@ test("integration: index.html exposes every required app control and local asset
     "form-error",
     "save-status",
     "load-error",
+    "transaction-action-error",
     "retry-load",
     "amount-error",
     "type-error",
@@ -395,6 +409,113 @@ test("integration: markup-like notes are rendered as literal text", () => {
   const history = elements["transaction-history"];
   assert.equal(collectText(history).includes(noteValue), true);
   assert.equal(collectTagNames(history).includes("img"), false);
+});
+
+test("integration: confirmed deletion removes only the selected transaction and updates balance", () => {
+  let confirmationCount = 0;
+  const storage = createStorage();
+  const { elements } = createApp(storage, {
+    confirm: (message) => {
+      confirmationCount += 1;
+      assert.equal(message, "Delete this transaction?");
+      return true;
+    },
+  });
+  elements["transaction-amount"].value = "10";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+  elements["transaction-amount"].value = "25";
+  elements["transaction-type"].value = "Money Received";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+
+  const before = transactionsFrom(storage);
+  const deleteButtons = deleteButtonsFrom(elements["transaction-history"]);
+  assert.equal(deleteButtons.length, 2);
+  assert.equal(deleteButtons.every((button) => button.type === "button"), true);
+  deleteButtons[1].dispatch("click");
+
+  assert.equal(confirmationCount, 1);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(transactionsFrom(storage))),
+    [before[0]],
+  );
+  assert.equal(elements["balance-amount"].textContent, "₹90.00");
+  assert.equal(collectText(elements["transaction-history"]).includes("₹25.00"), false);
+});
+
+test("integration: cancelling deletion leaves storage, history, and balance unchanged", () => {
+  const storage = createStorage();
+  const { elements } = createApp(storage, { confirm: () => false });
+  elements["transaction-amount"].value = "12.34";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+  const savedBefore = storage.values.get("transactions");
+  const historyBefore = collectText(elements["transaction-history"]);
+  const balanceBefore = elements["balance-amount"].textContent;
+
+  deleteButtonsFrom(elements["transaction-history"])[0].dispatch("click");
+
+  assert.equal(storage.values.get("transactions"), savedBefore);
+  assert.equal(collectText(elements["transaction-history"]), historyBefore);
+  assert.equal(elements["balance-amount"].textContent, balanceBefore);
+});
+
+test("integration: failed deletion preserves data and displays the exact failure message", () => {
+  const storageOptions = { failWrites: false };
+  const storage = createStorage({}, storageOptions);
+  const { elements } = createApp(storage);
+  elements["transaction-amount"].value = "12.34";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+  const savedBefore = storage.values.get("transactions");
+  const historyBefore = collectText(elements["transaction-history"]);
+  const balanceBefore = elements["balance-amount"].textContent;
+  storageOptions.failWrites = true;
+
+  deleteButtonsFrom(elements["transaction-history"])[0].dispatch("click");
+
+  assert.equal(elements["transaction-action-error"].textContent, "Failed to delete");
+  assert.equal(storage.values.get("transactions"), savedBefore);
+  assert.equal(collectText(elements["transaction-history"]), historyBefore);
+  assert.equal(elements["balance-amount"].textContent, balanceBefore);
+});
+
+test("integration: deleting the last transaction shows the empty state", () => {
+  const storage = createStorage();
+  const { elements } = createApp(storage);
+  elements["transaction-amount"].value = "12.34";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+
+  deleteButtonsFrom(elements["transaction-history"])[0].dispatch("click");
+
+  assert.deepEqual(transactionsFrom(storage), []);
+  assert.equal(elements["balance-amount"].textContent, "₹100.00");
+  assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(deleteButtonsFrom(elements["transaction-history"]).length, 0);
+});
+
+test("integration: render failure after deletion save reports saved state and recovery guidance", () => {
+  const storage = createStorage();
+  const { elements } = createApp(storage);
+  elements["transaction-amount"].value = "12.34";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+  const historyBefore = collectText(elements["transaction-history"]);
+  elements["transaction-history"].replaceChildren = () => {
+    throw new Error("render failed");
+  };
+
+  deleteButtonsFrom(elements["transaction-history"])[0].dispatch("click");
+
+  assert.deepEqual(transactionsFrom(storage), []);
+  assert.equal(
+    elements["transaction-action-error"].textContent,
+    "The transaction was saved, but the history could not refresh. Reload the page to view it.",
+  );
+  assert.notEqual(elements["transaction-action-error"].textContent, "Failed to delete");
+  assert.equal(collectText(elements["transaction-history"]), historyBefore);
 });
 
 test("integration: failed save preserves form, state, and no-success feedback", () => {

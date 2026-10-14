@@ -275,6 +275,7 @@ const formError = document.getElementById("form-error");
 const saveStatus = document.getElementById("save-status");
 const loadError = document.getElementById("load-error");
 const retryLoadButton = document.getElementById("retry-load");
+const transactionActionError = document.getElementById("transaction-action-error");
 const fieldErrorElements = {
   amount: document.getElementById("amount-error"),
   type: document.getElementById("type-error"),
@@ -381,6 +382,15 @@ const createTransactionElement = (transaction) => {
     item.append(note);
   }
 
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "transaction-delete";
+  deleteButton.type = "button";
+  deleteButton.textContent = "Delete";
+  deleteButton.addEventListener("click", () => {
+    deleteTransaction(transaction.id);
+  });
+  item.append(deleteButton);
+
   return item;
 };
 
@@ -440,10 +450,65 @@ const setFormError = (message) => {
   showElement(formError, Boolean(message));
 };
 
+const setTransactionActionError = (message) => {
+  transactionActionError.textContent = message;
+  showElement(transactionActionError, Boolean(message));
+};
+
 const clearSubmissionFeedback = () => {
   setFormError("");
   saveStatus.textContent = "";
   showElement(saveStatus, false);
+};
+
+const deleteTransaction = (transactionId) => {
+  if (isSaving || isLoading || !repositoryReady) {
+    return;
+  }
+
+  const transactionExists = transactions.some(
+    (transaction) => transaction.id === transactionId,
+  );
+  if (!transactionExists) {
+    return;
+  }
+
+  setTransactionActionError("");
+  if (!window.confirm("Delete this transaction?")) {
+    return;
+  }
+
+  isSaving = true;
+  saveButton.disabled = true;
+  try {
+    let updatedTransactions;
+    let updatedBalance;
+    try {
+      updatedTransactions = transactions.filter(
+        (transaction) => transaction.id !== transactionId,
+      );
+      if (updatedTransactions.length === transactions.length) {
+        throw new Error("The selected transaction no longer exists.");
+      }
+      updatedBalance = calculateAvailableBalance(updatedTransactions);
+      transactionRepository.save(updatedTransactions);
+    } catch (error) {
+      setTransactionActionError("Failed to delete");
+      return;
+    }
+
+    transactions = updatedTransactions;
+    try {
+      renderTransactions(transactions, updatedBalance);
+    } catch (error) {
+      setTransactionActionError(
+        "The transaction was saved, but the history could not refresh. Reload the page to view it.",
+      );
+    }
+  } finally {
+    isSaving = false;
+    saveButton.disabled = !repositoryReady;
+  }
 };
 
 if (transactionForm) {

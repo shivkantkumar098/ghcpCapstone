@@ -161,6 +161,27 @@ h2 {
   border-radius: 0.5rem;
 }
 
+.transaction-delete {
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #a32232;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #a32232;
+  font: inherit;
+  font-weight: 600;
+}
+
+.transaction-delete:focus-visible {
+  outline: 2px solid #315ca8;
+  outline-offset: 2px;
+}
+
+.action-error {
+  margin: 0 0 0.75rem;
+  color: #a32232;
+}
+
 .transaction-heading {
   display: flex;
   justify-content: space-between;
