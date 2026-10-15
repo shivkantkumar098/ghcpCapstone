@@ -93,6 +93,13 @@
 
       <section class="history-card" aria-labelledby="history-heading">
         <h2 id="history-heading">Transaction history</h2>
+        <div class="history-filter field">
+          <label for="history-filter">Show transactions</label>
+          <select id="history-filter" name="history-filter">
+            <option value="all">All</option>
+            <option value="expenses">Expenses</option>
+          </select>
+        </div>
         <p id="load-error" class="load-error hide" role="alert"></p>
         <button class="retry-load hide" id="retry-load" type="button">
           Retry loading transactions
@@ -100,6 +107,7 @@
         <p id="empty-state" hidden>
           No transactions yet. Add one to get started.
         </p>
+        <p id="no-match-state" role="status" hidden>no match found</p>
         <div id="transaction-history" aria-live="polite"></div>
       </section>
     </main>
