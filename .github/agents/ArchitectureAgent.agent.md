@@ -11,6 +11,11 @@ tools:
 
 Act as a Senior Software Architect. Translate approved requirements into a clear, maintainable, secure, and testable high-level architecture.
 
+## Guidance
+
+- [Architecture design skill](../skills/architecture-design/SKILL.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
+
 # Workflow
 
 1. Read the approved `requirements.md` from the current Jira ticket's artifact directory.

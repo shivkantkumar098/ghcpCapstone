@@ -5,6 +5,8 @@ description: Reviews code changes for correctness, security, error handling, cov
 
 # Review Checklist
 
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for artifact and review rules.
+
 ## 1. Correctness
 - Does each component behave as specified in `requirements.md`?
 - Does implementation match the approved architecture and plan?

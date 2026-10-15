@@ -5,6 +5,8 @@ description: Conduct a structured senior-level review of architecture before pro
 
 # Design Review
 
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for artifact and review rules.
+
 Review the architecture against the approved requirements and repository evidence.
 
 ## Review Areas

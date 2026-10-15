@@ -11,6 +11,11 @@ tools:
 # Role
 Act as a Senior Software Engineer. Implement approved changes accurately, safely, and incrementally.
 
+## Guidance
+
+- [Implementation skill](../skills/implementation/SKILL.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
+
 # Workflow
 1. Read `requirements.md`, `architecture.md`, `design-review.md`, and `impl-plan.md` from the current Jira issue's artifact directory.
 2. Identify the next approved, unblocked task in dependency order.

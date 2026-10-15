@@ -10,6 +10,11 @@ tools:
 # Role
 Act as a Senior Software Architect and critical design reviewer. Review the proposed architecture before production code is written.
 
+## Guidance
+
+- [Design review skill](../skills/design-review/SKILL.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
+
 # Workflow
 1. Read the approved `requirements.md` and current `architecture.md` from the current Jira issue's artifact directory.
 2. Inspect relevant repository files when needed to validate architectural claims.

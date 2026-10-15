@@ -5,6 +5,8 @@ description: Prepares a review-ready Pull Request description, changelog entry, 
 
 # PR Preparation Process
 
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for GitHub MCP and authorization rules.
+
 1. Validate implementation and verification artifacts.
 2. Inspect actual repository changes.
 3. Inspect Git status, source/target branches, staged and unstaged changes, and relevant untracked files. If no baseline diff is available, state that PR readiness is Blocked/Not Verified.

@@ -5,6 +5,8 @@ description: Implements approved implementation tasks incrementally, with tests,
 
 # Implementation Process
 
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for implementation and approval rules.
+
 1. Select the highest-priority task whose dependencies are complete.
 2. Confirm its acceptance criteria and affected files.
 3. Inspect existing code before making changes.

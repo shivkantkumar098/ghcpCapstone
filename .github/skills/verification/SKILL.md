@@ -5,6 +5,8 @@ description: Verifies implementation behavior, test coverage, error handling, an
 
 # Verification Process
 
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for verification and evidence rules.
+
 ## 1. Test Discovery
 - Inspect existing unit and integration tests.
 - Identify available test runners and project commands.
@@ -15,6 +17,7 @@ description: Verifies implementation behavior, test coverage, error handling, an
 - Run integration tests where the environment supports them.
 - Run available linting, type checking, and static analysis.
 - Record commands, exit codes, and actual outcomes.
+- Gate on checks applicable to approved acceptance criteria, changed scope, or explicit repository/branch-protection policy. Do not run stale configured commands when their implementation is absent and behavior is not required; record Not Applicable with evidence. Keep actually executed failures visible, but do not let a pre-existing unrelated failure block the ticket unless it is an explicit required check.
 
 ## 3. Edge-Case Verification
 Verify appropriate cases, including:
@@ -39,9 +42,11 @@ Classify each check as:
 - Failed
 - Blocked
 - Not Verified
+- Not Applicable
 
 Do not mark a check Passed without execution or verifiable evidence.
 An approved waiver permits continuation only where the workflow allows it; it does not change a Failed, Blocked, or Not Verified result into Passed.
+Not Applicable checks do not block a ticket when their applicability rationale and repository evidence are recorded. A missing tool is Blocked/Not Verified only when that tool is required for the approved scope or an explicit merge gate.
 
 # Required Output: verification-report.md
 

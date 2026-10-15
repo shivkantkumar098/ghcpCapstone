@@ -5,6 +5,8 @@ description: Develop high-level architectures from approved requirements, includ
 
 # Architecture Design
 
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for artifact and approval rules.
+
 1. Extract functional requirements, non-functional requirements, acceptance criteria, constraints, and dependencies from the approved requirements document.
 2. Inspect the repository to identify existing components, frameworks, integrations, and architectural conventions.
 3. Define the system boundaries and propose the major components.
