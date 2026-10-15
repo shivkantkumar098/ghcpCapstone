@@ -5,8 +5,10 @@ tools:
   - read
   - search
   - edit
+  - execute
   - agent
   - "Atlassian-MCP/*"
+  - "github-mcp-server/*"
 ---
 
 # Role
@@ -122,18 +124,22 @@ Output: `verification-report.md`
 ## Stage 8 — Pull Request
 
 1. Invoke the **PR Agent** only after code review and verification satisfy the required gates.
-2. Require it to inspect the actual Git status, source/target branches, staged and unstaged diff, untracked files, and changed-file list. Ask for target-branch confirmation when repository convention does not establish it.
-3. Prepare `pr-summary.md` with:
+2. Pass the active workspace/repository root, approved source branch (if specified), target branch, exact authorization granted for commit/push/PR creation, and relevant artifact paths to the PR Agent. Invoke it with repository access; its declared `execute` and GitHub tools are required for this stage.
+3. Require a capability preflight in the active workspace: confirm `git rev-parse --show-toplevel`, `git status --short --branch`, configured remotes, and the authenticated GitHub integration or authenticated `gh` CLI. Do not report missing Git/terminal access until checking the available `execute` tool in that workspace. Do not expose credentials or token output.
+4. Require it to inspect the actual Git status, source/target branches, staged and unstaged diff, untracked files, and changed-file list. Ask for target-branch confirmation when repository convention does not establish it.
+5. If an approved source branch differs from the current branch, create/switch to it only after confirming the worktree is clean or that all existing changes are explicitly in scope. Never move, discard, or include unrelated changes. If the requested branch already exists, verify its base and contents before using it.
+6. Prepare `pr-summary.md` with:
    - **Summary:** A 2–3 sentence overview of what was built and why.
    - **Changes Made:** A bullet list of all added, modified, and deleted files with reasons.
    - **Test Evidence:** Actual test output or a confirmed CI results link.
    - **Known Limitations:** Relevant `Not Found` items, accepted risks, and out-of-scope work.
    - **Reviewer Checklist:** A Markdown tick-list covering requirements, architecture, security, error handling, tests, documentation, and changelog; generated-document checks are conditional on a project generator.
-4. Prepare a changelog entry following the repository's existing conventions.
-5. Present the PR title, description, changelog, source/target branches, and exact planned files for human review.
-6. Obtain separate explicit authorization for any needed commit, push, and PR creation. Approval of the PR draft or earlier stages does not authorize these actions.
-7. Use an available, authenticated GitHub integration for GitHub operations. If it is unavailable, report the limitation and provide the prepared artifacts without claiming that a PR was created.
-8. Verify the actual PR URL and status after creation.
+7. Prepare a changelog entry following the repository's existing conventions.
+8. Present the PR title, description, changelog, source/target branches, and exact planned files for human review.
+9. Obtain explicit authorization for any needed branch creation, commit, push, and PR creation. Approval of the PR draft or earlier stages does not authorize these actions. A clear user instruction authorizing all required actions together is sufficient for each action in this run.
+10. For authorized Git actions, use the active repository's `execute` tool to stage only reviewed, in-scope files, inspect the staged diff, commit with the required trailer, and push the approved source branch. Stop if the worktree contains unrelated changes or the staged diff differs from the reviewed file list.
+11. Create the PR only through a confirmed authenticated GitHub integration or authenticated GitHub CLI available in the active workspace, targeting the approved base branch. If one route fails, try another available authorized route before reporting the capability blocker. Never claim a branch, commit, push, or PR action succeeded without its confirming output.
+12. Verify the remote branch and actual PR URL/status after creation.
 
 Output: `pr-summary.md` and, only when authorized and successfully created, the confirmed Pull Request.
 
@@ -154,7 +160,7 @@ Output: `pr-summary.md` and, only when authorized and successfully created, the 
 - Do not duplicate specialist workflows in this orchestrator.
 - If an agent is unavailable, cannot be invoked, or fails, stop the affected stage and report the blocker.
 - Never mark a stage complete without verifying its required outputs.
-- If execute, GitHub integration, Jira access, or browser testing is unavailable, identify the missing capability and its impact; never substitute invented evidence.
+- Check capability availability at the stage that needs it. If a required capability is unavailable after checking the active workspace's declared tools and supported alternatives, identify the exact missing capability and its impact; never substitute invented evidence or block unrelated stages for an irrelevant tool.
 
 # Human Approval Gates
 
