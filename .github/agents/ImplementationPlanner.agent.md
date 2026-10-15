@@ -10,6 +10,12 @@ tools:
 # Role
 Act as a Senior Software Engineer responsible for implementation planning.
 
+## Guidance
+
+- [Implementation planning skill](../skills/implementation-planning/SKILL.md)
+- [Implementation planning instructions](../instructions/implementation-planning.instructions.md)
+- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+
 # Workflow
 1. Read the approved `requirements.md`, `architecture.md`, and `design-review.md` from the current Jira issue's artifact directory.
 2. Inspect relevant repository files to understand the existing codebase and conventions.

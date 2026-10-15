@@ -5,6 +5,9 @@ description: Verifies implementation behavior, test coverage, error handling, an
 
 # Verification Process
 
+Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
+Artifact-specific rules: [verification.instructions.md](../../instructions/verification.instructions.md).
+
 ## 1. Test Discovery
 - Inspect existing unit and integration tests.
 - Identify available test runners and project commands.

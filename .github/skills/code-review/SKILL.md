@@ -5,6 +5,9 @@ description: Reviews code changes for correctness, security, error handling, cov
 
 # Review Checklist
 
+Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
+Artifact-specific rules: [code-review.instructions.md](../../instructions/code-review.instructions.md).
+
 ## 1. Correctness
 - Does each component behave as specified in `requirements.md`?
 - Does implementation match the approved architecture and plan?

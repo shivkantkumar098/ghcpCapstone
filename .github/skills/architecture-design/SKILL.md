@@ -5,6 +5,9 @@ description: Develop high-level architectures from approved requirements, includ
 
 # Architecture Design
 
+Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
+Artifact-specific rules: [architecture-artifacts.instructions.md](../../instructions/architecture-artifacts.instructions.md).
+
 1. Extract functional requirements, non-functional requirements, acceptance criteria, constraints, and dependencies from the approved requirements document.
 2. Inspect the repository to identify existing components, frameworks, integrations, and architectural conventions.
 3. Define the system boundaries and propose the major components.

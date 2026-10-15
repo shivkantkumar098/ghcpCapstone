@@ -5,6 +5,9 @@ description: Creates prioritized, dependency-ordered implementation plans from a
 
 # Planning Process
 
+Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
+Artifact-specific rules: [implementation-planning.instructions.md](../../instructions/implementation-planning.instructions.md).
+
 1. Extract requirements, components, constraints, and design decisions.
 2. Inspect the repository to identify affected files and existing dependencies.
 3. Break work into small, independently verifiable tasks.

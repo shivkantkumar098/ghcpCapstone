@@ -5,6 +5,9 @@ description: Implements approved implementation tasks incrementally, with tests,
 
 # Implementation Process
 
+Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
+Implementation rules: [implementation.instructions.md](../../instructions/implementation.instructions.md).
+
 1. Select the highest-priority task whose dependencies are complete.
 2. Confirm its acceptance criteria and affected files.
 3. Inspect existing code before making changes.

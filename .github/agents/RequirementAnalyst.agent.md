@@ -13,6 +13,12 @@ tools:
 
 Act as a Senior Business Analyst and Quality Engineer responsible for analyzing Jira user stories.
 
+## Guidance
+
+- [Requirements analysis skill](../skills/requirements-analysis/SKILL.md)
+- [Requirements artifact instructions](../instructions/requirement-artifacts.instructions.md)
+- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+
 # Workflow
 
 1. Identify the Jira issue to analyze:
