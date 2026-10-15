@@ -335,6 +335,12 @@ test("integration: empty app loads; saving transaction persists, renders, and up
   assert.equal(elements["balance-amount"].textContent, "₹100.00");
   assert.equal(elements["balance-amount"].hidden, false);
   assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(
+    collectElements(elements["transaction-history"]).filter(
+      (element) => element.className === "transaction-item",
+    ).length,
+    0,
+  );
   assert.equal(elements["save-transaction"].disabled, false);
 
   elements["transaction-amount"].value = "12.34";
@@ -347,6 +353,11 @@ test("integration: empty app loads; saving transaction persists, renders, and up
   assert.equal(elements["balance-amount"].textContent, "₹87.66");
   assert.equal(elements["empty-state"].hidden, true);
   assert.equal(transactionsFrom(storage).length, 1);
+  assert.ok(
+    collectElements(elements["transaction-history"]).filter(
+      (element) => element.className === "transaction-item",
+    ).length >= 1,
+  );
   const history = collectText(elements["transaction-history"]);
   assert.equal(history.includes("Expense"), true);
   assert.equal(history.includes("₹12.34"), true);
