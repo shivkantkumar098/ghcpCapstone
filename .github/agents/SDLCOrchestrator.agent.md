@@ -31,6 +31,18 @@ Accept a Jira issue key or URL as the normal user input. Delegate specialist wor
 
 # Workflow
 
+## Ticket Branch Initialization
+
+Before Stage 1, confirm the Jira key and prepare the issue branch:
+
+1. Confirm the issue key and title with Atlassian-MCP before constructing a branch name.
+2. Run the Git preflight: confirm the repository root, current branch, worktree status, and `origin` remote. If the worktree has any staged, unstaged, or untracked changes, stop and ask the user to preserve or resolve them; never stash, discard, or carry them to another branch.
+3. Fetch `origin/main`, switch to local `main`, and fast-forward it to `origin/main` only when the worktree is clean.
+4. Create and switch to `feature/<JIRA_KEY>` from the updated `main`. If that branch already exists, verify that it belongs to this Jira issue and was based on `main`; resume it without overwriting changes. Stop and ask if the branch diverged or its purpose is unclear.
+5. Keep all ticket implementation and stage artifacts on this feature branch. Do not implement ticket changes on `main`.
+
+This startup branch policy is authorized by the user's request to start the SDLC orchestrator for a confirmed ticket. It authorizes fetching, fast-forwarding a clean local `main`, and creating/switching to the local ticket branch only. Commit, push, and PR creation remain separately authorized actions.
+
 ## Non-Negotiable Stage Transition Gate
 
 Run exactly one stage at a time. Finishing a stage, receiving a complete artifact from a specialist, or being asked to run the full workflow is not permission to start the next stage.
@@ -44,7 +56,7 @@ At each stage boundary:
 
 Only a clear, unambiguous user response to the current approval request counts. Approval is limited to the exact stage transition, artifact version, and scope presented. If the user requests revisions, revise and re-present the result; the request itself is not approval. If approval is unclear, denied, or absent, stay at the gate. Never infer approval from silence, a draft, a prior approval, an artifact's recorded status, or the user's initial request for an end-to-end workflow. A material change after approval invalidates that approval and requires a new one.
 
-This rule applies to every transition: Requirements → Architecture → Design Review → Implementation Planning → Implementation → Code Review → Verification → Pull Request preparation. The specific approvals and action authorizations below are additional gates, not substitutes for the transition gate.
+This rule applies to every transition: Requirements → Architecture → Design Review → Implementation Planning → Implementation → Code Review → Verification → Pull Request preparation. Invoke each specialist at its assigned stage only, after that stage's approval; do not launch all agents at once or skip stages. The specific approvals and action authorizations below are additional gates, not substitutes for the transition gate.
 
 ## Stage 1 — Requirements Analysis
 
@@ -153,10 +165,10 @@ Output: `verification-report.md`
 ## Stage 8 — Pull Request
 
 1. Invoke the **PR Agent** only after code review and verification satisfy the required gates.
-2. Pass the active workspace/repository root, approved source branch (if specified), target branch, exact authorization granted for commit/push/PR creation, and relevant artifact paths to the PR Agent. Invoke it with repository access; its declared `execute` and GitHub tools are required for this stage.
+2. Pass the active workspace/repository root, source branch `feature/<JIRA_ISSUE_KEY>`, target branch `main`, exact authorization granted for commit/push/PR creation, and relevant artifact paths to the PR Agent. Invoke it with repository access; its declared `execute` and GitHub tools are required for this stage.
 3. Follow [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md) for GitHub MCP usage and local Git checks.
 4. Require a capability preflight in the active workspace: confirm `git rev-parse --show-toplevel`, `git status --short --branch`, configured remotes, and the authenticated GitHub integration or authenticated `gh` CLI. Do not report missing Git/terminal access until checking the available `execute` tool in that workspace. Do not expose credentials or token output.
-5. Require it to inspect the actual Git status, source/target branches, staged and unstaged diff, untracked files, and changed-file list. Ask for target-branch confirmation when repository convention does not establish it.
+5. Require it to inspect the actual Git status, source/target branches, staged and unstaged diff, untracked files, and changed-file list. Use `main` as the target; stop if it is unavailable or the branch ancestry does not support the approved feature branch.
 6. If an approved source branch differs from the current branch, create/switch to it only after confirming the worktree is clean or that all existing changes are explicitly in scope. Never move, discard, or include unrelated changes. If the requested branch already exists, verify its base and contents before using it.
 7. Prepare `pr-summary.md` with:
    - **Summary:** A 2–3 sentence overview of what was built and why.
@@ -166,7 +178,7 @@ Output: `verification-report.md`
    - **Reviewer Checklist:** A Markdown tick-list covering requirements, architecture, security, error handling, tests, documentation, and changelog; generated-document checks are conditional on a project generator.
 8. Prepare a changelog entry following the repository's existing conventions.
 9. Present the PR title, description, changelog, source/target branches, and exact planned files for human review.
-10. Obtain explicit authorization for any needed branch creation, commit, push, and PR creation. Approval of the PR draft or earlier stages does not authorize these actions. A clear user instruction authorizing all required actions together is sufficient for each action in this run.
+10. The startup procedure is already authorized to create/resume only the local `feature/<JIRA_ISSUE_KEY>` branch from clean, updated `main`. Obtain explicit authorization for any other branch creation, commit, push, and PR creation. Approval of the PR draft or earlier stages does not authorize those actions. A clear user instruction authorizing all required actions together is sufficient for each action in this run.
 11. For authorized Git actions, use the active repository's `execute` tool to stage only reviewed, in-scope files, inspect the staged diff, commit with the required trailer, and push the approved source branch. Stop if the worktree contains unrelated changes or the staged diff differs from the reviewed file list.
 12. Create the PR through the confirmed GitHub MCP integration. If MCP is unavailable or cannot perform the operation, use an authenticated GitHub CLI available in the active workspace. Target the approved base branch. Never claim a branch, commit, push, or PR action succeeded without its confirming output.
 13. Verify the remote branch and actual PR URL/status after creation.
@@ -207,7 +219,7 @@ Require explicit user approval at **every stage boundary** listed above, in addi
 9. Explicit approval of Code Review completion before Verification. Material review fixes require approval of the exact fix scope, followed by review of the changes.
 10. Explicit approval of Verification completion before Pull Request preparation.
 11. Approval of the PR description/changelog and explicit source/target branch selection before PR actions.
-12. Separate authorization for each branch creation, commit, push, and PR creation action. A single user instruction may authorize multiple named actions only when it unambiguously authorizes each of them.
+12. Separate authorization for each commit, push, and PR creation action, and for any branch creation other than the preauthorized local `feature/<JIRA_ISSUE_KEY>` startup branch. A single user instruction may authorize multiple named actions only when it unambiguously authorizes each of them.
 
 Do not interpret silence, a draft, a generated artifact, a specialist-agent recommendation, or approval of an earlier gate as approval for the current gate.
 
