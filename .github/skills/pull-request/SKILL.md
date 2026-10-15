@@ -5,7 +5,7 @@ description: Prepares a review-ready Pull Request description, changelog entry, 
 
 # PR Preparation Process
 
-Follow the [GitHub MCP guidance](../../instructions/github-mcp.instructions.md) for GitHub API operations.
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for GitHub MCP and authorization rules.
 
 1. Validate implementation and verification artifacts.
 2. Inspect actual repository changes.

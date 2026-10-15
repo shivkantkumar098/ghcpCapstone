@@ -15,9 +15,7 @@ Act as a Senior Software Engineer responsible for preparing a clear, traceable, 
 ## Guidance
 
 - [Pull request skill](../skills/pull-request/SKILL.md)
-- [Pull request instructions](../instructions/pr.instructions.md)
-- [GitHub MCP guidance](../instructions/github-mcp.instructions.md)
-- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 1. Read `requirements.md`, `architecture.md`, `design-review.md`, `impl-plan.md`, `implementation-notes.md`, `code-review.md`, and `verification-report.md` from the current Jira issue's artifact directory.

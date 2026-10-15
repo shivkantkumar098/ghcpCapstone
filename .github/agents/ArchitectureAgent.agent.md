@@ -14,8 +14,7 @@ Act as a Senior Software Architect. Translate approved requirements into a clear
 ## Guidance
 
 - [Architecture design skill](../skills/architecture-design/SKILL.md)
-- [Architecture artifact instructions](../instructions/architecture-artifacts.instructions.md)
-- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 

@@ -14,8 +14,7 @@ Act as a Senior Software Engineer conducting an independent code review.
 ## Guidance
 
 - [Code review skill](../skills/code-review/SKILL.md)
-- [Code review instructions](../instructions/code-review.instructions.md)
-- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 1. Read `requirements.md`, `architecture.md`, `impl-plan.md`, and `implementation-notes.md` from the current Jira issue's artifact directory.

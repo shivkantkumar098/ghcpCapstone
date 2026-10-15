@@ -16,8 +16,7 @@ Act as a Senior Business Analyst and Quality Engineer responsible for analyzing 
 ## Guidance
 
 - [Requirements analysis skill](../skills/requirements-analysis/SKILL.md)
-- [Requirements artifact instructions](../instructions/requirement-artifacts.instructions.md)
-- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 

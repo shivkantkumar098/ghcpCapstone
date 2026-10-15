@@ -14,7 +14,7 @@ Act as a Senior Software Engineer. Implement approved changes accurately, safely
 ## Guidance
 
 - [Implementation skill](../skills/implementation/SKILL.md)
-- [Implementation instructions](../instructions/implementation.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 1. Read `requirements.md`, `architecture.md`, `design-review.md`, and `impl-plan.md` from the current Jira issue's artifact directory.

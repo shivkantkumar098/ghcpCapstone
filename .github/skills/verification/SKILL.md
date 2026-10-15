@@ -5,8 +5,7 @@ description: Verifies implementation behavior, test coverage, error handling, an
 
 # Verification Process
 
-Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
-Artifact-specific rules: [verification.instructions.md](../../instructions/verification.instructions.md).
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for verification and evidence rules.
 
 ## 1. Test Discovery
 - Inspect existing unit and integration tests.

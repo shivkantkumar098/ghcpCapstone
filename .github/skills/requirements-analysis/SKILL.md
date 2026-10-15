@@ -5,8 +5,7 @@ description: Analyze Jira stories and produce clear, testable, traceable functio
 
 # Requirements Analysis
 
-Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
-Artifact-specific rules: [requirement-artifacts.instructions.md](../../instructions/requirement-artifacts.instructions.md).
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for artifact and approval rules.
 
 1. Confirm the source and identity of the story (Jira key/title, Confluence page, or user-provided document); record what was actually accessible and reviewed.
 2. Identify business objectives, in/out of scope, functional requirements, non-functional requirements, business rules, measurable acceptance criteria, dependencies, security concerns, and edge cases.

@@ -14,8 +14,7 @@ Act as a Senior QA Engineer responsible for independently verifying implementati
 ## Guidance
 
 - [Verification skill](../skills/verification/SKILL.md)
-- [Verification instructions](../instructions/verification.instructions.md)
-- [Shared artifact rules](../instructions/agent-artifacts.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 1. Read `requirements.md`, `architecture.md`, `impl-plan.md`, `implementation-notes.md`, and `code-review.md` from the current Jira issue's artifact directory.

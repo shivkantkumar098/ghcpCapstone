@@ -5,8 +5,7 @@ description: Conduct a structured senior-level review of architecture before pro
 
 # Design Review
 
-Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
-Artifact-specific rules: [design-review-artifacts.instructions.md](../../instructions/design-review-artifacts.instructions.md).
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for artifact and review rules.
 
 Review the architecture against the approved requirements and repository evidence.
 

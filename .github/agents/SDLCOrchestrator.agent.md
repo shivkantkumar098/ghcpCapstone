@@ -27,7 +27,7 @@ Accept a Jira issue key or URL as the normal user input. Delegate specialist wor
 - [Code Review Agent](CodeReviewAgent.agent.md) | [code review skill](../skills/code-review/SKILL.md)
 - [Verification Agent](VerificationAgent.agent.md) | [verification skill](../skills/verification/SKILL.md)
 - [PR Agent](PRAgent.agent.md) | [pull request skill](../skills/pull-request/SKILL.md)
-- [GitHub MCP guidance](../instructions/github-mcp.instructions.md) | [shared artifact rules](../instructions/agent-artifacts.instructions.md)
+- [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
 
@@ -137,7 +137,7 @@ Output: `verification-report.md`
 
 1. Invoke the **PR Agent** only after code review and verification satisfy the required gates.
 2. Pass the active workspace/repository root, approved source branch (if specified), target branch, exact authorization granted for commit/push/PR creation, and relevant artifact paths to the PR Agent. Invoke it with repository access; its declared `execute` and GitHub tools are required for this stage.
-3. Use GitHub MCP for GitHub API operations when available, following [GitHub MCP guidance](../instructions/github-mcp.instructions.md). Use local Git commands for workspace inspection; use authenticated GitHub CLI only when MCP is unavailable or cannot perform the operation.
+3. Follow [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md) for GitHub MCP usage and local Git checks.
 4. Require a capability preflight in the active workspace: confirm `git rev-parse --show-toplevel`, `git status --short --branch`, configured remotes, and the authenticated GitHub integration or authenticated `gh` CLI. Do not report missing Git/terminal access until checking the available `execute` tool in that workspace. Do not expose credentials or token output.
 5. Require it to inspect the actual Git status, source/target branches, staged and unstaged diff, untracked files, and changed-file list. Ask for target-branch confirmation when repository convention does not establish it.
 6. If an approved source branch differs from the current branch, create/switch to it only after confirming the worktree is clean or that all existing changes are explicitly in scope. Never move, discard, or include unrelated changes. If the requested branch already exists, verify its base and contents before using it.

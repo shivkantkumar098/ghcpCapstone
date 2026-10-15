@@ -5,8 +5,7 @@ description: Implements approved implementation tasks incrementally, with tests,
 
 # Implementation Process
 
-Shared artifact and safety rules: [agent-artifacts.instructions.md](../../instructions/agent-artifacts.instructions.md).
-Implementation rules: [implementation.instructions.md](../../instructions/implementation.instructions.md).
+Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for implementation and approval rules.
 
 1. Select the highest-priority task whose dependencies are complete.
 2. Confirm its acceptance criteria and affected files.
