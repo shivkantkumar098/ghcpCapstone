@@ -268,6 +268,7 @@ const transactionTypeInput = document.getElementById("transaction-type");
 const transactionAmountInput = document.getElementById("transaction-amount");
 const transactionNoteInput = document.getElementById("transaction-note");
 const transactionHistory = document.getElementById("transaction-history");
+const transactionFilter = document.getElementById("transaction-filter");
 const emptyState = document.getElementById("empty-state");
 const balanceAmount = document.getElementById("balance-amount");
 const saveButton = document.getElementById("save-transaction");
@@ -290,6 +291,25 @@ let transactions = [];
 let repositoryReady = false;
 let isSaving = false;
 let isLoading = false;
+let activeFilter = "all";
+
+const normalizeFilterValue = (value) => {
+  if (value === "income" || value === "expenses") {
+    return value;
+  }
+  return "all";
+};
+
+const filterTransactions = (nextTransactions, filterValue = activeFilter) => {
+  const normalizedFilter = normalizeFilterValue(filterValue);
+  if (normalizedFilter === "income") {
+    return nextTransactions.filter((transaction) => transaction.type === "Money Received");
+  }
+  if (normalizedFilter === "expenses") {
+    return nextTransactions.filter((transaction) => transaction.type === "Expense");
+  }
+  return nextTransactions;
+};
 
 const showElement = (element, visible) => {
   if (element) {
@@ -384,17 +404,26 @@ const createTransactionElement = (transaction) => {
   return item;
 };
 
-const renderTransactions = (nextTransactions, balanceInPaise) => {
+const renderTransactions = (nextTransactions, balanceInPaise, filterValue = activeFilter) => {
+  const filteredTransactions = filterTransactions(nextTransactions, filterValue);
   const list = document.createElement("div");
   list.className = "transaction-list";
-  nextTransactions.forEach((transaction) => {
+  filteredTransactions.forEach((transaction) => {
     list.append(createTransactionElement(transaction));
   });
 
   transactionHistory.replaceChildren(list);
   balanceAmount.textContent = formatINR(balanceInPaise);
   balanceAmount.hidden = false;
-  emptyState.hidden = nextTransactions.length !== 0;
+
+  if (nextTransactions.length === 0) {
+    emptyState.textContent = "No transactions yet. Add one to get started.";
+    emptyState.hidden = false;
+    return;
+  }
+
+  emptyState.textContent = "No transactions match this filter.";
+  emptyState.hidden = filteredTransactions.length !== 0;
 };
 
 const renderLoadFailure = (error) => {
@@ -411,6 +440,15 @@ const renderLoadFailure = (error) => {
   showElement(retryLoadButton, true);
 };
 
+const applyCurrentFilter = () => {
+  if (transactionFilter) {
+    const nextFilter = normalizeFilterValue(transactionFilter.value);
+    activeFilter = nextFilter;
+    transactionFilter.value = nextFilter;
+  }
+  renderTransactions(transactions, calculateAvailableBalance(transactions));
+};
+
 const loadTransactions = () => {
   if (isLoading) {
     return;
@@ -421,8 +459,12 @@ const loadTransactions = () => {
   try {
     const loadedTransactions = transactionRepository.load();
     const loadedBalance = calculateAvailableBalance(loadedTransactions);
-    renderTransactions(loadedTransactions, loadedBalance);
     transactions = loadedTransactions;
+    if (transactionFilter) {
+      activeFilter = normalizeFilterValue(transactionFilter.value);
+      transactionFilter.value = activeFilter;
+    }
+    renderTransactions(loadedTransactions, loadedBalance);
     repositoryReady = true;
     saveButton.disabled = false;
     showElement(loadError, false);
@@ -523,8 +565,22 @@ if (transactionForm) {
   });
 }
 
+if (transactionFilter) {
+  transactionFilter.addEventListener("change", () => {
+    if (!repositoryReady) {
+      return;
+    }
+    activeFilter = normalizeFilterValue(transactionFilter.value);
+    renderTransactions(transactions, calculateAvailableBalance(transactions));
+  });
+}
+
 if (retryLoadButton) {
   retryLoadButton.addEventListener("click", loadTransactions);
+}
+
+if (transactionFilter) {
+  activeFilter = normalizeFilterValue(transactionFilter.value);
 }
 
 loadTransactions();

@@ -119,6 +119,7 @@ const createApp = (storage = createStorage()) => {
     "transaction-amount",
     "transaction-note",
     "transaction-history",
+    "transaction-filter",
     "empty-state",
     "balance-amount",
     "save-transaction",
@@ -459,4 +460,110 @@ test("integration: unsafe legacy value blocks migration without altering source 
   assert.equal(storage.values.has("transactions"), false);
   assert.equal(storage.values.get("expenses"), expenses);
   assert.equal(storage.values.get("budget"), "800");
+});
+
+test("integration: history filter defaults to all and shows only matching income entries", () => {
+  const envelope = JSON.stringify({
+    schemaVersion: 1,
+    transactions: [
+      { id: "1", type: "Money Received", amountInPaise: 1500, date: "2026-10-01", note: "Salary" },
+      { id: "2", type: "Expense", amountInPaise: 750, date: "2026-10-02", note: "Groceries" },
+      { id: "3", type: "Money Received", amountInPaise: 2500, date: "2026-10-03", note: "Bonus" },
+    ],
+  });
+  const { elements } = createApp(createStorage({ transactions: envelope }));
+
+  assert.equal(elements["transaction-filter"].value, "all");
+  assert.equal(elements["empty-state"].hidden, true);
+
+  elements["transaction-filter"].value = "income";
+  elements["transaction-filter"].dispatch("change");
+
+  const incomeHistory = collectText(elements["transaction-history"]);
+  assert.equal(incomeHistory.includes("Salary"), true);
+  assert.equal(incomeHistory.includes("Bonus"), true);
+  assert.equal(incomeHistory.includes("Groceries"), false);
+  assert.equal(elements["empty-state"].hidden, true);
+});
+
+test("integration: expense filter shows no-match empty state and restores all on reset", () => {
+  const envelope = JSON.stringify({
+    schemaVersion: 1,
+    transactions: [
+      { id: "1", type: "Money Received", amountInPaise: 1500, date: "2026-10-01", note: "Salary" },
+      { id: "2", type: "Money Received", amountInPaise: 2500, date: "2026-10-03", note: "Bonus" },
+    ],
+  });
+  const { elements } = createApp(createStorage({ transactions: envelope }));
+
+  elements["transaction-filter"].value = "expenses";
+  elements["transaction-filter"].dispatch("change");
+
+  assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(elements["empty-state"].textContent.includes("No transactions match this filter"), true);
+
+  elements["transaction-filter"].value = "all";
+  elements["transaction-filter"].dispatch("change");
+
+  const allHistory = collectText(elements["transaction-history"]);
+  assert.equal(allHistory.includes("Salary"), true);
+  assert.equal(allHistory.includes("Bonus"), true);
+  assert.equal(elements["empty-state"].hidden, true);
+});
+
+
+test("integration: filter markup exposes All, Income, Expenses, and defaults to All", () => {
+  const filterMarkup = htmlSource.match(/<select\b[^>]*id="transaction-filter"[^>]*>([\s\S]*?)<\/select>/);
+  assert.ok(filterMarkup, "history filter select is present");
+  assert.deepEqual(
+    [...filterMarkup[1].matchAll(/<option\b[^>]*value="([^"]+)"[^>]*>([^<]+)<\/option>/g)].map(
+      ([, value, label]) => [value, label],
+    ),
+    [["all", "All"], ["income", "Income"], ["expenses", "Expenses"]],
+  );
+  assert.match(filterMarkup[1], /<option value="all" selected>All<\/option>/);
+});
+
+test("integration: Expenses shows only expense records and All restores history without changing balance or storage", () => {
+  const envelope = JSON.stringify({
+    schemaVersion: 1,
+    transactions: [
+      { id: "income", type: "Money Received", amountInPaise: 1000, date: "2026-10-01", note: "Pay" },
+      { id: "expense", type: "Expense", amountInPaise: 200, date: "2026-10-02", note: "Meal" },
+    ],
+  });
+  const storage = createStorage({ transactions: envelope });
+  const { elements } = createApp(storage);
+  const initialBalance = elements["balance-amount"].textContent;
+  const initialStoredTransactions = storage.values.get("transactions");
+
+  elements["transaction-filter"].value = "expenses";
+  elements["transaction-filter"].dispatch("change");
+  const expenseHistory = collectText(elements["transaction-history"]);
+  assert.match(expenseHistory, /Meal/);
+  assert.doesNotMatch(expenseHistory, /Pay|Money Received/);
+  assert.match(expenseHistory, /Expense/);
+  assert.equal(elements["balance-amount"].textContent, initialBalance);
+  assert.equal(storage.values.get("transactions"), initialStoredTransactions);
+  assert.equal(elements["empty-state"].hidden, true);
+
+  elements["transaction-filter"].value = "all";
+  elements["transaction-filter"].dispatch("change");
+  const fullHistory = collectText(elements["transaction-history"]);
+  assert.match(fullHistory, /Pay|Money Received/);
+  assert.match(fullHistory, /Meal|Expense/);
+  assert.equal(elements["balance-amount"].textContent, initialBalance);
+  assert.equal(storage.values.get("transactions"), initialStoredTransactions);
+});
+
+test("integration: empty source collection shows an empty state for either type filter", () => {
+  const { elements } = createApp(createStorage());
+
+  for (const filter of ["income", "expenses"]) {
+    elements["transaction-filter"].value = filter;
+    elements["transaction-filter"].dispatch("change");
+    assert.equal(elements["empty-state"].hidden, false, `${filter} empty state is visible`);
+    assert.notEqual(elements["empty-state"].textContent.trim(), "", `${filter} message is clear`);
+    assert.equal(collectText(elements["transaction-history"]).trim(), "");
+  }
 });
