@@ -127,6 +127,16 @@ h2 {
   color: #5c6678;
 }
 
+#no-match-state {
+  margin: 0;
+  color: #5c6678;
+}
+
+.history-filter {
+  max-width: 14rem;
+  margin-bottom: 1rem;
+}
+
 .load-error {
   margin: 0 0 0.75rem;
   color: #a32232;

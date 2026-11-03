@@ -119,7 +119,9 @@ const createApp = (storage = createStorage()) => {
     "transaction-amount",
     "transaction-note",
     "transaction-history",
+    "history-filter",
     "empty-state",
+    "no-match-state",
     "balance-amount",
     "save-transaction",
     "form-error",
@@ -136,6 +138,7 @@ const createApp = (storage = createStorage()) => {
   });
   elements["transaction-form"].elementsById = elements;
   elements["transaction-type"].value = "Expense";
+  elements["no-match-state"].textContent = "no match found";
 
   let nextId = 1;
   const window = {
@@ -154,6 +157,7 @@ const createApp = (storage = createStorage()) => {
       parseAmountToPaise,
       formatINR,
       calculateAvailableBalance,
+      filterTransactionsByType,
       getLocalDateString,
       formatTransactionDate,
       isValidTransactionDate,
@@ -170,6 +174,19 @@ const createApp = (storage = createStorage()) => {
 const transactionsFrom = (storage) =>
   JSON.parse(storage.values.get("transactions")).transactions;
 
+const storedTransaction = (id, type, amountInPaise, note = id) => ({
+  id,
+  type,
+  amountInPaise,
+  date: "2026-10-14",
+  note,
+});
+
+const storageWithTransactions = (transactions) =>
+  createStorage({
+    transactions: JSON.stringify({ schemaVersion: 1, transactions }),
+  });
+
 test("integration: index.html exposes every required app control and local asset", () => {
   for (const id of [
     "transaction-date",
@@ -178,7 +195,9 @@ test("integration: index.html exposes every required app control and local asset
     "transaction-amount",
     "transaction-note",
     "transaction-history",
+    "history-filter",
     "empty-state",
+    "no-match-state",
     "balance-amount",
     "save-transaction",
     "form-error",
@@ -197,6 +216,105 @@ test("integration: index.html exposes every required app control and local asset
   assert.match(htmlSource, /<link\b[^>]*href="styles\.css"/);
   assert.match(htmlSource, /<script\b[^>]*src="script\.js"/);
   assert.doesNotMatch(htmlSource, /id="(?:budget|expense-title|edit|delete)[^"]*"/i);
+  assert.match(htmlSource, /<label for="history-filter">Show transactions<\/label>/);
+  assert.match(
+    htmlSource,
+    /<select id="history-filter" name="history-filter">\s*<option value="all">All<\/option>\s*<option value="expenses">Expenses<\/option>\s*<\/select>/,
+  );
+  assert.doesNotMatch(
+    htmlSource.match(/<select id="history-filter"[\s\S]*?<\/select>/)?.[0] || "",
+    />Income</,
+  );
+  assert.match(htmlSource, /<p id="no-match-state" role="status" hidden>no match found<\/p>/);
+});
+
+test("unit: history projection matches literal Expense values without mutating canonical transactions", () => {
+  const { context } = createApp();
+  const { filterTransactionsByType } = context.__appTest;
+  const allTransactions = [
+    { type: "Expense", id: "expense" },
+    { type: "Money Received", id: "received" },
+    { type: "expense", id: "lowercase" },
+  ];
+  const originalTransactions = structuredClone(allTransactions);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(filterTransactionsByType(allTransactions, "expenses"))),
+    [{ type: "Expense", id: "expense" }],
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(filterTransactionsByType(allTransactions, "all"))),
+    originalTransactions,
+  );
+  assert.deepEqual(allTransactions, originalTransactions);
+});
+
+test("integration: All and Expenses switch history without changing the full balance or stored collection", () => {
+  const canonicalTransactions = [
+    storedTransaction("income", "Money Received", 5000),
+    storedTransaction("expense", "Expense", 2000),
+  ];
+  const storage = storageWithTransactions(canonicalTransactions);
+  const { elements } = createApp(storage);
+
+  assert.equal(collectText(elements["transaction-history"]).includes("income"), true);
+  assert.equal(collectText(elements["transaction-history"]).includes("expense"), true);
+  assert.equal(elements["balance-amount"].textContent, "₹130.00");
+
+  elements["history-filter"].value = "expenses";
+  elements["history-filter"].dispatch("change");
+
+  assert.equal(collectText(elements["transaction-history"]).includes("income"), false);
+  assert.equal(collectText(elements["transaction-history"]).includes("expense"), true);
+  assert.equal(elements["balance-amount"].textContent, "₹130.00");
+  assert.deepEqual(transactionsFrom(storage), canonicalTransactions);
+
+  elements["history-filter"].value = "all";
+  elements["history-filter"].dispatch("change");
+  assert.equal(collectText(elements["transaction-history"]).includes("income"), true);
+  assert.equal(collectText(elements["transaction-history"]).includes("expense"), true);
+  assert.equal(elements["balance-amount"].textContent, "₹130.00");
+});
+
+test("integration: Expenses with no matches shows exact no-match text for non-empty and empty collections", () => {
+  for (const transactions of [
+    [storedTransaction("income", "Money Received", 5000)],
+    [],
+  ]) {
+    const { elements } = createApp(storageWithTransactions(transactions));
+    elements["history-filter"].value = "expenses";
+    elements["history-filter"].dispatch("change");
+
+    assert.equal(elements["no-match-state"].hidden, false);
+    assert.equal(elements["no-match-state"].textContent, "no match found");
+    assert.equal(elements["empty-state"].hidden, true);
+    assert.equal(collectText(elements["transaction-history"]), "");
+    assert.equal(
+      elements["balance-amount"].textContent,
+      transactions.length === 0 ? "₹100.00" : "₹150.00",
+    );
+  }
+});
+
+test("integration: saving while Expenses is selected preserves the filter and the full saved collection", () => {
+  const originalExpense = storedTransaction("existing-expense", "Expense", 2000);
+  const storage = storageWithTransactions([originalExpense]);
+  const { elements } = createApp(storage);
+
+  elements["history-filter"].value = "expenses";
+  elements["history-filter"].dispatch("change");
+  elements["transaction-type"].value = "Money Received";
+  elements["transaction-amount"].value = "50";
+  elements["transaction-date"].value = "2026-10-14";
+  elements["transaction-form"].dispatch("submit");
+
+  const history = collectText(elements["transaction-history"]);
+  assert.equal(history.includes("existing-expense"), true);
+  assert.equal(history.includes("Money Received"), false);
+  assert.equal(elements["balance-amount"].textContent, "₹130.00");
+  assert.equal(transactionsFrom(storage).length, 2);
+  assert.equal(transactionsFrom(storage)[1].type, "Money Received");
+  assert.equal(elements["no-match-state"].hidden, true);
 });
 
 test("unit: amount parsing accepts positive INR cents and rejects invalid precision", () => {
@@ -321,6 +439,7 @@ test("integration: empty app loads; saving transaction persists, renders, and up
   assert.equal(elements["balance-amount"].textContent, "₹100.00");
   assert.equal(elements["balance-amount"].hidden, false);
   assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(elements["no-match-state"].hidden, true);
   assert.equal(elements["save-transaction"].disabled, false);
 
   elements["transaction-amount"].value = "12.34";
@@ -424,9 +543,14 @@ test("integration: corrupt storage shows an error, hides empty state, and disabl
 
   assert.notEqual(elements["load-error"].textContent, "");
   assert.equal(elements["empty-state"].hidden, true);
+  assert.equal(elements["no-match-state"].hidden, true);
   assert.equal(elements["balance-amount"].hidden, true);
   assert.equal(elements["save-transaction"].disabled, true);
+  assert.equal(elements["history-filter"].disabled, true);
   assert.equal(elements["retry-load"].className.includes("hide"), false);
+  elements["history-filter"].value = "expenses";
+  elements["history-filter"].dispatch("change");
+  assert.equal(elements["no-match-state"].hidden, true);
 });
 
 test("integration: storage read failure is visible and retry loads after recovery", () => {
@@ -437,6 +561,7 @@ test("integration: storage read failure is visible and retry loads after recover
   assert.notEqual(elements["load-error"].textContent, "");
   assert.equal(elements["balance-amount"].hidden, true);
   assert.equal(elements["save-transaction"].disabled, true);
+  assert.equal(elements["no-match-state"].hidden, true);
 
   options.failReads = false;
   elements["retry-load"].dispatch("click");
@@ -445,6 +570,7 @@ test("integration: storage read failure is visible and retry loads after recover
   assert.equal(elements["balance-amount"].textContent, "₹100.00");
   assert.equal(elements["save-transaction"].disabled, false);
   assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(elements["history-filter"].disabled, false);
 });
 
 test("integration: unsafe legacy value blocks migration without altering source keys", () => {

@@ -51,6 +51,11 @@ const calculateAvailableBalance = (transactions) =>
     return nextBalance;
   }, 10_000);
 
+const filterTransactionsByType = (allTransactions, filter) =>
+  filter === "expenses"
+    ? allTransactions.filter((transaction) => transaction.type === "Expense")
+    : allTransactions;
+
 const getLocalDateString = (date = new Date()) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -268,7 +273,9 @@ const transactionTypeInput = document.getElementById("transaction-type");
 const transactionAmountInput = document.getElementById("transaction-amount");
 const transactionNoteInput = document.getElementById("transaction-note");
 const transactionHistory = document.getElementById("transaction-history");
+const historyFilterInput = document.getElementById("history-filter");
 const emptyState = document.getElementById("empty-state");
+const noMatchState = document.getElementById("no-match-state");
 const balanceAmount = document.getElementById("balance-amount");
 const saveButton = document.getElementById("save-transaction");
 const formError = document.getElementById("form-error");
@@ -287,6 +294,7 @@ const fieldInputs = {
 };
 
 let transactions = [];
+let historyFilter = "all";
 let repositoryReady = false;
 let isSaving = false;
 let isLoading = false;
@@ -384,24 +392,36 @@ const createTransactionElement = (transaction) => {
   return item;
 };
 
-const renderTransactions = (nextTransactions, balanceInPaise) => {
+const renderHistory = (allTransactions) => {
+  const visibleTransactions = filterTransactionsByType(
+    allTransactions,
+    historyFilter,
+  );
   const list = document.createElement("div");
   list.className = "transaction-list";
-  nextTransactions.forEach((transaction) => {
+  visibleTransactions.forEach((transaction) => {
     list.append(createTransactionElement(transaction));
   });
 
   transactionHistory.replaceChildren(list);
+  emptyState.hidden = historyFilter !== "all" || allTransactions.length !== 0;
+  noMatchState.hidden =
+    historyFilter !== "expenses" || visibleTransactions.length !== 0;
+};
+
+const renderTransactions = (nextTransactions, balanceInPaise) => {
+  renderHistory(nextTransactions);
   balanceAmount.textContent = formatINR(balanceInPaise);
   balanceAmount.hidden = false;
-  emptyState.hidden = nextTransactions.length !== 0;
 };
 
 const renderLoadFailure = (error) => {
   repositoryReady = false;
   saveButton.disabled = true;
+  historyFilterInput.disabled = true;
   balanceAmount.hidden = true;
   emptyState.hidden = true;
+  noMatchState.hidden = true;
   transactionHistory.replaceChildren();
   loadError.textContent =
     error instanceof Error
@@ -425,6 +445,7 @@ const loadTransactions = () => {
     transactions = loadedTransactions;
     repositoryReady = true;
     saveButton.disabled = false;
+    historyFilterInput.disabled = false;
     showElement(loadError, false);
     showElement(retryLoadButton, false);
   } catch (error) {
@@ -525,6 +546,17 @@ if (transactionForm) {
 
 if (retryLoadButton) {
   retryLoadButton.addEventListener("click", loadTransactions);
+}
+
+if (historyFilterInput) {
+  historyFilterInput.addEventListener("change", () => {
+    if (!repositoryReady) {
+      return;
+    }
+    historyFilter =
+      historyFilterInput.value === "expenses" ? "expenses" : "all";
+    renderHistory(transactions);
+  });
 }
 
 loadTransactions();
