@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "issue": {
+    "key": "<confirmed Jira issue key>",
+    "title": "<confirmed Jira title>",
+    "branch": "<source branch from SDLCWorkflowConfig.json>"
+  },
+  "currentStage": "<configured stage name>",
+  "workflowStatus": "Not Started",
+  "nextAction": "<next verified action or approval>",
+  "context": {
+    "keptThroughPlanning": true,
+    "implementationChoice": "Pending"
+  },
+  "stages": {},
+  "agentRuns": [],
+  "updatedAt": "<ISO-8601 timestamp>"
+}

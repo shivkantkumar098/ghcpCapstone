@@ -1,11 +1,13 @@
 ---
 name: pull-request
-description: Prepares a review-ready Pull Request description, changelog entry, test evidence, and reviewer checklist.
+description: Prepares a review-ready, AI-identified Pull Request with a description, changelog entry, test evidence, and reviewer checklist.
 ---
 
 # PR Preparation Process
 
 Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instructions.md) for GitHub MCP and authorization rules.
+
+Read [SDLCWorkflowConfig.json](../../agents/SDLCWorkflowConfig.json) and use its configured branch and artifact values. Clearly identify AI-generated PRs using both the configured title prefix and label. If either marker cannot be applied, report a blocker instead of preparing or creating a partially identified PR.
 
 1. Validate implementation and verification artifacts.
 2. Inspect actual repository changes.
@@ -17,6 +19,13 @@ Follow the [SDLC workflow instructions](../../instructions/sdlc-workflow.instruc
 8. Generate a reviewer checklist.
 9. Follow existing changelog conventions; if none exist, propose an entry without inventing release details.
 10. Validate that the PR description matches the actual diff.
+
+# PR Title and Labels
+
+- Begin the title with the configured AI-generated title prefix, followed by a concise change summary.
+- Apply the configured AI-generated label to the PR.
+- Include the proposed title and label in the PR preparation artifact and verify both on the created PR.
+- Do not create the PR if either configured marker cannot be applied.
 
 # Required PR Description
 
@@ -49,7 +58,7 @@ Generate a Markdown tick-list covering:
 - Do not invent version numbers, release dates, or unreleased features.
 
 # Required Output
-Save `pr-summary.md` with:
+Save the configured Stage 8 artifact with:
 1. PR title
 2. Complete PR description
 3. Changelog entry

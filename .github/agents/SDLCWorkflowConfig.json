@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "artifactDirectoryPattern": ".github/AgentOutput/{issueKey}",
+  "checkpointFile": "workflow-session.json",
+  "sourceBranchPattern": "feature/{issueKey}",
+  "targetBranch": "main",
+  "stages": [
+    {
+      "number": 1,
+      "id": "requirements",
+      "name": "Requirements Analysis",
+      "agent": "Requirement Analyst",
+      "agentFile": "RequirementAnalyst.agent.md",
+      "skillFile": "../skills/requirements-analysis/SKILL.md",
+      "artifacts": ["requirements.md"]
+    },
+    {
+      "number": 2,
+      "id": "architecture",
+      "name": "Architecture Design",
+      "agent": "Architecture Agent",
+      "agentFile": "ArchitectureAgent.agent.md",
+      "skillFile": "../skills/architecture-design/SKILL.md",
+      "artifacts": ["architecture.md"]
+    },
+    {
+      "number": 3,
+      "id": "design-review",
+      "name": "Design Review",
+      "agent": "Design Review Agent",
+      "agentFile": "DesignReviewAgent.agent.md",
+      "skillFile": "../skills/design-review/SKILL.md",
+      "artifacts": ["design-review.md"],
+      "conditionalArtifacts": ["architecture.md"]
+    },
+    {
+      "number": 4,
+      "id": "implementation-planning",
+      "name": "Implementation Planning",
+      "agent": "Implementation Planner",
+      "agentFile": "ImplementationPlanner.agent.md",
+      "skillFile": "../skills/implementation-planning/SKILL.md",
+      "artifacts": ["impl-plan.md"]
+    },
+    {
+      "number": 5,
+      "id": "implementation",
+      "name": "Implementation",
+      "agent": "Implementation Agent",
+      "agentFile": "ImplementationAgent.agent.md",
+      "skillFile": "../skills/implementation/SKILL.md",
+      "artifacts": ["implementation-notes.md"],
+      "additionalOutputs": ["production changes"]
+    },
+    {
+      "number": 6,
+      "id": "code-review",
+      "name": "Code Review",
+      "agent": "Code Review Agent",
+      "agentFile": "CodeReviewAgent.agent.md",
+      "skillFile": "../skills/code-review/SKILL.md",
+      "artifacts": ["code-review.md"]
+    },
+    {
+      "number": 7,
+      "id": "verification",
+      "name": "Verification",
+      "agent": "Verification Agent",
+      "agentFile": "VerificationAgent.agent.md",
+      "skillFile": "../skills/verification/SKILL.md",
+      "artifacts": ["verification-report.md"]
+    },
+    {
+      "number": 8,
+      "id": "pull-request",
+      "name": "Pull Request",
+      "agent": "PR Agent",
+      "agentFile": "PRAgent.agent.md",
+      "skillFile": "../skills/pull-request/SKILL.md",
+      "artifacts": ["pr-summary.md"],
+      "additionalOutputs": ["confirmed pull request, only when authorized and successfully created"]
+    }
+  ],
+  "pullRequest": {
+    "aiGeneratedIdentification": {
+      "titlePrefix": "[AI-generated]",
+      "label": "ai-generated",
+      "requireBoth": true
+    }
+  }
+}

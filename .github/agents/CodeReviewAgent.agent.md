@@ -17,12 +17,12 @@ Act as a Senior Software Engineer conducting an independent code review.
 - [SDLC workflow instructions](../instructions/sdlc-workflow.instructions.md)
 
 # Workflow
-1. Read `requirements.md`, `architecture.md`, `impl-plan.md`, and `implementation-notes.md` from the current Jira issue's artifact directory.
+1. Read `SDLCWorkflowConfig.json`; use its artifact directory pattern and read the configured Stage 1, Stage 2, Stage 4, and Stage 5 artifacts.
 2. Inspect actual Git status, staged and unstaged diffs, relevant untracked files, changed files, and surrounding source. If the repository has no baseline commit or the diff cannot establish scope, explicitly mark diff review Blocked/Not Verified.
-3. Apply the `code-review` skill.
+3. Apply the `code-review` skill, including workflow configuration externalization and AI-generated PR identification. Read `SDLCWorkflowConfig.json` when those checks apply.
 4. Evaluate every required review area and record evidence for each finding.
 5. Classify findings as Critical, High, Medium, or Low.
-6. Save findings to `.github/AgentOutput/<JIRA_ISSUE_KEY>/code-review.md`.
+6. Save findings to the configured Stage 6 artifact path.
 7. Report actionable findings with file paths and line references where available.
 8. Do not modify production code during the review.
 9. After approved fixes are applied, review the affected changes again and update the report.
