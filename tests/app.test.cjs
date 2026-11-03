@@ -94,8 +94,12 @@ class FakeElement {
 
 const createStorage = (seed = {}, options = {}) => {
   const values = new Map(Object.entries(seed));
+  let writeCount = 0;
   return {
     values,
+    get writeCount() {
+      return writeCount;
+    },
     getItem(key) {
       if (options.failReads) {
         throw new Error("storage read denied");
@@ -106,6 +110,7 @@ const createStorage = (seed = {}, options = {}) => {
       if (options.failWrites) {
         throw new Error("storage quota exceeded");
       }
+      writeCount += 1;
       values.set(key, String(value));
     },
   };
@@ -120,6 +125,7 @@ const createApp = (storage = createStorage()) => {
     "transaction-note",
     "transaction-history",
     "empty-state",
+    "history-filter",
     "balance-amount",
     "save-transaction",
     "form-error",
@@ -136,6 +142,7 @@ const createApp = (storage = createStorage()) => {
   });
   elements["transaction-form"].elementsById = elements;
   elements["transaction-type"].value = "Expense";
+  elements["history-filter"].value = "all";
 
   let nextId = 1;
   const window = {
@@ -170,6 +177,11 @@ const createApp = (storage = createStorage()) => {
 const transactionsFrom = (storage) =>
   JSON.parse(storage.values.get("transactions")).transactions;
 
+const renderedTransactionTypes = (historyElement) =>
+  historyElement.children[0].children.map(
+    (transaction) => transaction.children[0].children[0].textContent,
+  );
+
 test("integration: index.html exposes every required app control and local asset", () => {
   for (const id of [
     "transaction-date",
@@ -179,6 +191,7 @@ test("integration: index.html exposes every required app control and local asset
     "transaction-note",
     "transaction-history",
     "empty-state",
+    "history-filter",
     "balance-amount",
     "save-transaction",
     "form-error",
@@ -194,6 +207,11 @@ test("integration: index.html exposes every required app control and local asset
 
   assert.match(htmlSource, /<form\b[^>]*id="transaction-form"/);
   assert.match(htmlSource, /<button\b[^>]*id="save-transaction"[^>]*type="submit"/);
+  assert.match(htmlSource, /<label for="history-filter">Filter transactions<\/label>/);
+  assert.match(
+    htmlSource,
+    /<select id="history-filter" name="history-filter">\s*<option value="all" selected>All<\/option>\s*<option value="income">Income<\/option>\s*<option value="expenses">Expenses<\/option>\s*<\/select>/,
+  );
   assert.match(htmlSource, /<link\b[^>]*href="styles\.css"/);
   assert.match(htmlSource, /<script\b[^>]*src="script\.js"/);
   assert.doesNotMatch(htmlSource, /id="(?:budget|expense-title|edit|delete)[^"]*"/i);
@@ -321,6 +339,10 @@ test("integration: empty app loads; saving transaction persists, renders, and up
   assert.equal(elements["balance-amount"].textContent, "₹100.00");
   assert.equal(elements["balance-amount"].hidden, false);
   assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(
+    elements["empty-state"].textContent.trim(),
+    "No transactions yet. Add one to get started.",
+  );
   assert.equal(elements["save-transaction"].disabled, false);
 
   elements["transaction-amount"].value = "12.34";
@@ -338,6 +360,177 @@ test("integration: empty app loads; saving transaction persists, renders, and up
   assert.equal(history.includes("₹12.34"), true);
   assert.equal(history.includes("14/10/2026"), true);
   assert.equal(history.includes("Lunch"), true);
+});
+
+test("integration: history filter selects exact transaction types and All restores every record", () => {
+  const initialTransactions = [
+    {
+      id: "expense-1",
+      type: "Expense",
+      amountInPaise: 1000,
+      date: "2026-10-14",
+      note: "First expense",
+    },
+    {
+      id: "income-1",
+      type: "Money Received",
+      amountInPaise: 2000,
+      date: "2026-10-15",
+      note: "Income",
+    },
+    {
+      id: "expense-2",
+      type: "Expense",
+      amountInPaise: 500,
+      date: "2026-10-16",
+      note: "Second expense",
+    },
+  ];
+  const storage = createStorage({
+    transactions: JSON.stringify({
+      schemaVersion: 1,
+      transactions: initialTransactions,
+    }),
+  });
+  const { elements } = createApp(storage);
+  const writesBeforeFiltering = storage.writeCount;
+  const balanceBeforeFiltering = elements["balance-amount"].textContent;
+
+  assert.deepEqual(renderedTransactionTypes(elements["transaction-history"]), [
+    "Expense",
+    "Money Received",
+    "Expense",
+  ]);
+  assert.equal(balanceBeforeFiltering, "₹105.00");
+
+  elements["history-filter"].value = "income";
+  elements["history-filter"].dispatch("change");
+  assert.deepEqual(renderedTransactionTypes(elements["transaction-history"]), [
+    "Money Received",
+  ]);
+
+  elements["history-filter"].value = "expenses";
+  elements["history-filter"].dispatch("change");
+  assert.deepEqual(renderedTransactionTypes(elements["transaction-history"]), [
+    "Expense",
+    "Expense",
+  ]);
+
+  elements["history-filter"].value = "all";
+  elements["history-filter"].dispatch("change");
+  assert.deepEqual(renderedTransactionTypes(elements["transaction-history"]), [
+    "Expense",
+    "Money Received",
+    "Expense",
+  ]);
+  assert.equal(elements["balance-amount"].textContent, balanceBeforeFiltering);
+  assert.equal(storage.writeCount, writesBeforeFiltering);
+  assert.deepEqual(transactionsFrom(storage), initialTransactions);
+});
+
+test("integration: filtered no-match uses generic copy while truly empty history keeps existing copy", () => {
+  const storage = createStorage({
+    transactions: JSON.stringify({
+      schemaVersion: 1,
+      transactions: [
+        {
+          id: "expense-1",
+          type: "Expense",
+          amountInPaise: 1000,
+          date: "2026-10-14",
+        },
+      ],
+    }),
+  });
+  const { elements } = createApp(storage);
+
+  elements["history-filter"].value = "income";
+  elements["history-filter"].dispatch("change");
+
+  assert.equal(elements["empty-state"].hidden, false);
+  assert.equal(
+    elements["empty-state"].textContent,
+    "No transactions match this filter.",
+  );
+  assert.deepEqual(renderedTransactionTypes(elements["transaction-history"]), []);
+  assert.equal(elements["balance-amount"].textContent, "₹90.00");
+
+  const trulyEmptyApp = createApp(createStorage());
+  trulyEmptyApp.elements["history-filter"].value = "income";
+  trulyEmptyApp.elements["history-filter"].dispatch("change");
+  assert.equal(trulyEmptyApp.elements["empty-state"].hidden, false);
+  assert.equal(
+    trulyEmptyApp.elements["empty-state"].textContent.trim(),
+    "No transactions yet. Add one to get started.",
+  );
+
+  const incomeStorage = createStorage({
+    transactions: JSON.stringify({
+      schemaVersion: 1,
+      transactions: [
+        {
+          id: "income-1",
+          type: "Money Received",
+          amountInPaise: 1000,
+          date: "2026-10-14",
+        },
+      ],
+    }),
+  });
+  const incomeOnlyApp = createApp(incomeStorage);
+  incomeOnlyApp.elements["history-filter"].value = "expenses";
+  incomeOnlyApp.elements["history-filter"].dispatch("change");
+  assert.equal(incomeOnlyApp.elements["empty-state"].hidden, false);
+  assert.equal(
+    incomeOnlyApp.elements["empty-state"].textContent,
+    "No transactions match this filter.",
+  );
+});
+
+test("integration: adding under an active filter saves full history and keeps full-history balance", () => {
+  const storage = createStorage({
+    transactions: JSON.stringify({
+      schemaVersion: 1,
+      transactions: [
+        {
+          id: "expense-1",
+          type: "Expense",
+          amountInPaise: 1000,
+          date: "2026-10-14",
+        },
+      ],
+    }),
+  });
+  const { elements } = createApp(storage);
+
+  elements["history-filter"].value = "expenses";
+  elements["history-filter"].dispatch("change");
+  const writesBeforeAdd = storage.writeCount;
+  assert.equal(storage.writeCount, writesBeforeAdd);
+
+  elements["transaction-amount"].value = "25.00";
+  elements["transaction-type"].value = "Money Received";
+  elements["transaction-date"].value = "2026-10-15";
+  elements["transaction-note"].value = "Scholarship";
+  elements["transaction-form"].dispatch("submit");
+
+  assert.equal(storage.writeCount, writesBeforeAdd + 1);
+  assert.equal(transactionsFrom(storage).length, 2);
+  assert.deepEqual(
+    transactionsFrom(storage).map(({ type }) => type),
+    ["Expense", "Money Received"],
+  );
+  assert.deepEqual(renderedTransactionTypes(elements["transaction-history"]), [
+    "Expense",
+  ]);
+  assert.equal(elements["balance-amount"].textContent, "₹115.00");
+
+  const reloadedApp = createApp(storage);
+  assert.deepEqual(
+    renderedTransactionTypes(reloadedApp.elements["transaction-history"]),
+    ["Expense", "Money Received"],
+  );
+  assert.equal(reloadedApp.elements["balance-amount"].textContent, "₹115.00");
 });
 
 test("integration: invalid submission shows field feedback and does not persist", () => {
