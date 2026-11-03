@@ -269,6 +269,7 @@ const transactionAmountInput = document.getElementById("transaction-amount");
 const transactionNoteInput = document.getElementById("transaction-note");
 const transactionHistory = document.getElementById("transaction-history");
 const emptyState = document.getElementById("empty-state");
+const historyFilter = document.getElementById("history-filter");
 const balanceAmount = document.getElementById("balance-amount");
 const saveButton = document.getElementById("save-transaction");
 const formError = document.getElementById("form-error");
@@ -290,6 +291,7 @@ let transactions = [];
 let repositoryReady = false;
 let isSaving = false;
 let isLoading = false;
+let activeHistoryFilter = "all";
 
 const showElement = (element, visible) => {
   if (element) {
@@ -384,7 +386,26 @@ const createTransactionElement = (transaction) => {
   return item;
 };
 
-const renderTransactions = (nextTransactions, balanceInPaise) => {
+const getVisibleTransactions = (allTransactions, filter) => {
+  let matchingType;
+  if (filter === "income") {
+    matchingType = "Money Received";
+  } else if (filter === "expenses") {
+    matchingType = "Expense";
+  } else {
+    return allTransactions;
+  }
+
+  return allTransactions.filter(
+    (transaction) => transaction.type === matchingType,
+  );
+};
+
+const renderTransactions = (
+  nextTransactions,
+  balanceInPaise,
+  isHistoryEmpty,
+) => {
   const list = document.createElement("div");
   list.className = "transaction-list";
   nextTransactions.forEach((transaction) => {
@@ -395,6 +416,24 @@ const renderTransactions = (nextTransactions, balanceInPaise) => {
   balanceAmount.textContent = formatINR(balanceInPaise);
   balanceAmount.hidden = false;
   emptyState.hidden = nextTransactions.length !== 0;
+  if (!emptyState.hidden) {
+    emptyState.textContent = isHistoryEmpty
+      ? "No transactions yet. Add one to get started."
+      : "No transactions match this filter.";
+  }
+};
+
+const renderCurrentHistory = (allTransactions = transactions) => {
+  const balanceInPaise = calculateAvailableBalance(allTransactions);
+  const visibleTransactions = getVisibleTransactions(
+    allTransactions,
+    activeHistoryFilter,
+  );
+  renderTransactions(
+    visibleTransactions,
+    balanceInPaise,
+    allTransactions.length === 0,
+  );
 };
 
 const renderLoadFailure = (error) => {
@@ -420,8 +459,7 @@ const loadTransactions = () => {
   retryLoadButton.disabled = true;
   try {
     const loadedTransactions = transactionRepository.load();
-    const loadedBalance = calculateAvailableBalance(loadedTransactions);
-    renderTransactions(loadedTransactions, loadedBalance);
+    renderCurrentHistory(loadedTransactions);
     transactions = loadedTransactions;
     repositoryReady = true;
     saveButton.disabled = false;
@@ -508,7 +546,11 @@ if (transactionForm) {
       transactionForm.reset();
       transactionDateInput.value = getLocalDateString();
       try {
-        renderTransactions(transactions, updatedBalance);
+        renderTransactions(
+          getVisibleTransactions(transactions, activeHistoryFilter),
+          updatedBalance,
+          transactions.length === 0,
+        );
         saveStatus.textContent = "Transaction added.";
         showElement(saveStatus, true);
       } catch (error) {
@@ -525,6 +567,20 @@ if (transactionForm) {
 
 if (retryLoadButton) {
   retryLoadButton.addEventListener("click", loadTransactions);
+}
+
+if (historyFilter) {
+  historyFilter.addEventListener("change", () => {
+    activeHistoryFilter =
+      historyFilter.value === "income" || historyFilter.value === "expenses"
+        ? historyFilter.value
+        : "all";
+    historyFilter.value = activeHistoryFilter;
+
+    if (repositoryReady) {
+      renderCurrentHistory();
+    }
+  });
 }
 
 loadTransactions();
